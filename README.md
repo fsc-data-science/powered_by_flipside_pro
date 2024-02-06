@@ -72,7 +72,9 @@ SELECT
     WHERE
     -- COALESCE protects against a NULL result by providing an alternative
         block_timestamp > COALESCE(
-            DATEADD(hour, -4, (SELECT MAX(hour) FROM pro_charliemarketplace.tests.aggregated_hourly_transactions)),
+            DATEADD(hour, -4, 
+                (SELECT MAX(hour) FROM pro_charliemarketplace.tests.aggregated_hourly_transactions)
+                ),
             '1970-01-01' -- Default start date for the first run
             )
     GROUP BY
