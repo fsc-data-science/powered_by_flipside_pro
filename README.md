@@ -94,3 +94,47 @@ This incremental model meets all 3 of the engineering principles.
 1. We can simply empty the table, and start from scratch (1970-01-01) if we need a full refresh.
 2. Otherwise, if we have some data, we only re-calculate the last 4 hours, saving compute. 
 3. We use the hour as the `unit` to ensure we meet uniqueness criteria, and ultimately keep the data Tidy.
+
+## Scheduling Updates via Procedures
+
+Now that you have created a `schema` within your `database` and have an Incremental Model built. You can create a `PROCEDURE` 
+that makes it easy to trigger your incremental model on a schedule. Simply `CALL` the procedure!
+
+```sql
+CREATE OR REPLACE PROCEDURE pro_charliemarketplace.tests.update_aggregated_hourly_transactions()
+RETURNS STRING
+LANGUAGE SQL
+EXECUTE AS CALLER
+AS
+$$
+BEGIN
+    MERGE INTO pro_charliemarketplace.tests.aggregated_hourly_transactions AS target
+    USING (
+        SELECT
+            DATE_TRUNC('hour', block_timestamp) AS hour,
+            COUNT(*) AS transaction_count
+        FROM
+            ethereum.core.fact_transactions
+        WHERE
+            block_timestamp > COALESCE(
+                DATEADD(hour, -4, 
+                    (SELECT MAX(hour) FROM pro_charliemarketplace.tests.aggregated_hourly_transactions)),
+                '1970-01-01'
+            )
+        GROUP BY DATE_TRUNC('hour', block_timestamp)
+    ) AS source
+    ON target.hour = source.hour
+    WHEN MATCHED THEN UPDATE SET target.transaction_count = source.transaction_count
+    WHEN NOT MATCHED THEN INSERT (hour, transaction_count) VALUES (source.hour, source.transaction_count);
+
+    RETURN 'Merge operation completed successfully.';
+END;
+$$;
+
+```
+
+```sql
+
+CALL pro_charliemarketplace.tests.update_aggregated_hourly_transactions();
+
+```
