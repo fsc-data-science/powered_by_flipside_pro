@@ -63,8 +63,9 @@ CREATE TABLE IF NOT EXISTS pro_charliemarketplace.tests.aggregated_hourly_transa
     c. if there's no match, simply `INSERT` the new data.
 
 ```sql
-with lookback AS (
-SELECT
+MERGE INTO pro_charliemarketplace.tests.aggregated_hourly_transactions AS target
+USING (
+   SELECT
         DATE_TRUNC('hour', block_timestamp) AS hour,
         COUNT(*) AS transaction_count
     FROM
@@ -78,12 +79,7 @@ SELECT
             '1970-01-01' -- Default start date for the first run
             )
     GROUP BY
-        DATE_TRUNC('hour', block_timestamp)
-)
-
-MERGE INTO pro_charliemarketplace.tests.aggregated_hourly_transactions AS target
-USING (
-   select * from lookback   
+        DATE_TRUNC('hour', block_timestamp)  
 ) AS source
 ON target.hour = source.hour
 WHEN MATCHED THEN
