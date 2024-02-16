@@ -6,10 +6,13 @@
 
 CREATE SCHEMA IF NOT EXISTS pro_charliemarketplace.evm_metrics; 
 
+DROP TABLE pro_charliemarketplace.evm_metrics.daily_contracts;
+
 CREATE TABLE IF NOT EXISTS pro_charliemarketplace.evm_metrics.daily_contracts (
     chain VARCHAR,
-    day TIMESTAMP,
-    n_contracts INTEGER
+    day_ TIMESTAMP,
+    n_contracts INTEGER,
+    n_deployers INTEGER
 );
 
 call pro_charliemarketplace.evm_metrics.update_daily_contracts();
@@ -26,36 +29,30 @@ MERGE INTO pro_charliemarketplace.evm_metrics.daily_contracts AS target
     with eth_contracts AS (
     select 
     'ethereum' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from ethereum.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from ethereum.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
     arb_contracts AS (
     select 
     'arbitrum' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from arbitrum.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from arbitrum.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
@@ -63,90 +60,75 @@ MERGE INTO pro_charliemarketplace.evm_metrics.daily_contracts AS target
     avax_contracts AS (
     select 
     'avalanche' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from avalanche.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from avalanche.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
     op_contracts AS (
     select 
     'optimism' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from optimism.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from optimism.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
     bsc_contracts AS (
     select 
     'bsc' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from bsc.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from bsc.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
     base_contracts AS (
     select 
     'base' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from base.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from base.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     ),
 
     polygon_contracts AS (
     select 
     'polygon' as chain,
-    date_trunc('day', block_timestamp) as day_,
-    count(*) as n_contracts
-    from polygon.core.fact_traces
-    where block_timestamp > COALESCE(
+    date_trunc('day', created_block_timestamp) as day_,
+    count(*) as n_contracts,
+    count(distinct creator_address) as n_deployers
+    from polygon.core.dim_contracts
+    where created_block_timestamp > COALESCE(
     -- 2 day lookback 
                 dateadd(day, -2, (select max(day_) from pro_charliemarketplace.evm_metrics.daily_contracts)),
             '1970-01-01' -- Default start date for the first run
             )
-    AND TYPE IN ('CREATE', 'CREATE2')
-    AND OUTPUT IS NOT NULL
-    AND TX_STATUS = 'SUCCESS'
-    AND TRACE_STATUS = 'SUCCESS'
     group by day_
     )
 
@@ -167,10 +149,10 @@ MERGE INTO pro_charliemarketplace.evm_metrics.daily_contracts AS target
     AS source
     ON target.day_ = source.day_ AND target.chain = source.chain
     WHEN MATCHED THEN
-    UPDATE SET target.n_contracts = source.n_contracts
+    UPDATE SET target.n_contracts = source.n_contracts, target.n_deployers = source.n_deployers
     WHEN NOT MATCHED THEN
-    INSERT (chain, day_, n_contracts)
-    VALUES (source.chain, source.day_, source.n_contracts);
+    INSERT (chain, day_, n_contracts, n_deployers)
+    VALUES (source.chain, source.day_, source.n_contracts, source.n_deployers);
 
     RETURN 'EVM daily contracts updated successfully';
 END;
