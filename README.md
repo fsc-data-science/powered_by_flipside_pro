@@ -1,6 +1,15 @@
 # Powered by Flipside Pro
  Leveraging Flipside Pro to curate custom tables and manage incremental models with views. With some best practices in Tidy Data Engineering.
 
+# Reproducible Examples 
+
+Within `production` you will find `.sql` files that follow the principles below (1 file per pipeline) to:
+
+1. create schemas/tables
+2. drop tables & recreate them 
+3. Follow the MMUI pattern to build models incrementally
+4. Store the pattern within a `PROCEDURE` to call it on schedule.
+
 # Tidyness in Data Curation
 
 Hardcore database admins may be aware of the origins of relational databases. 
